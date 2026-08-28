@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Băng nhạc của tôi</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Bungee: chữ biển hiệu · Be Vietnam Pro: nội dung · IBM Plex Mono: màn LCD -->
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#141009; --panel:#221a10; --panel2:#1a130a;
+  --line:#3d3020; --line2:#5a4629;
+  --ink:#f3e9d2; --mut:#b3a184; --dim:#7d6f58;
+  --amber:#ffb03a; --amber2:#ff8a00; --red:#ff4b33; --green:#7fe08c;
+  --lcd-bg:#0e1a12; --lcd-ink:#ffd98a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; font-family:'Be Vietnam Pro',sans-serif; color:var(--ink);
+  background:
+    radial-gradient(1100px 560px at 12% -10%, rgba(255,138,0,.10), transparent 60%),
+    radial-gradient(900px 520px at 96% 112%, rgba(255,75,51,.07), transparent 60%),
+    var(--bg);
+  min-height:100vh; overflow-x:hidden;
+}
+/* lớp hạt + quầng sáng trôi chậm phía sau */
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:40; opacity:.055;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.bg-glow{
+  position:fixed; inset:-20%; z-index:0; pointer-events:none; opacity:.55;
+  background:
+    radial-gradient(420px 300px at 22% 30%, rgba(255,176,58,.10), transparent 70%),
+    radial-gradient(500px 380px at 78% 72%, rgba(255,75,51,.07), transparent 70%);
+  animation:drift 32s ease-in-out infinite alternate;
+}
+@keyframes drift{to{transform:translate(4%,3%) scale(1.06)}}
+.wrap{position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 20px 60px}
+
+/* ── dải chữ chạy ─────────────────────────────── */
+.ticker{background:#0d0a06; border-bottom:1px solid var(--line); overflow:hidden; position:relative; z-index:1}
+.ticker-in{display:inline-flex; white-space:nowrap; padding:7px 0; font:600 11px/1 'IBM Plex Mono',monospace; letter-spacing:.18em; color:var(--amber); animation:tick 38s linear infinite}
+.ticker-in span{padding-right:3.5em}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ── đầu trang ────────────────────────────────── */
+.masthead{display:flex; align-items:center; gap:18px; padding:26px 2px 20px}
+.lamp{width:14px;height:14px;border-radius:50%;background:#3a2c1c;border:1px solid var(--line2); flex:none; transition:.3s}
+body.playing .lamp{background:var(--red); box-shadow:0 0 14px var(--red); animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{50%{opacity:.45}}
+.lamp-tag{font:600 10px/1 'IBM Plex Mono',monospace; letter-spacing:.25em; color:var(--dim)}
+.station{
+  margin:0; font-family:'Bungee',cursive; font-weight:400; letter-spacing:.5px;
+  font-size:clamp(1.5rem,4.2vw,2.5rem); color:var(--ink);
+  text-shadow:0 3px 0 #00000055, 0 0 30px rgba(255,176,58,.25);
+  outline:none; cursor:text; border-bottom:2px dashed transparent;
+}
+.station:focus{border-bottom-color:var(--line2)}
+.clock{margin-left:auto; font:600 15px 'IBM Plex Mono',monospace; color:var(--amber); background:var(--lcd-bg); padding:8px 12px; border:1px solid var(--line); border-radius:8px; box-shadow:inset 0 0 12px #000}
+
+/* ── panel chung ──────────────────────────────── */
+.panel{
+  position:relative; background:linear-gradient(180deg,#271e12,#1c150c);
+  border:1px solid var(--line); border-radius:14px; padding:24px;
+  box-shadow:0 14px 34px #00000066, inset 0 1px 0 rgba(255,220,150,.07);
+  opacity:0; transform:translateY(16px); transition:opacity .6s ease, transform .6s ease;
+}
+.panel.in{opacity:1; transform:none}
+.sc{position:absolute; width:9px; height:9px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #8a744f, #241a0c 70%); box-shadow:inset 0 -1px 1px #000}
+.sc1{top:9px;left:9px}.sc2{top:9px;right:9px}.sc3{bottom:9px;left:9px}.sc4{bottom:9px;right:9px}
+.ptitle{font-family:'Bungee'; font-size:.95rem; letter-spacing:.14em; color:var(--amber); margin:0 0 16px; display:flex; align-items:center; gap:10px}
+.ptitle small{font:500 11px 'IBM Plex Mono'; letter-spacing:.1em; color:var(--dim)}
+
+/* ── đầu máy cassette ─────────────────────────── */
+.deck-grid{display:grid; grid-template-columns:380px 1fr; gap:26px}
+@media(max-width:920px){.deck-grid{grid-template-columns:1fr}}
+.cassette{background:#160f07; border:1px solid var(--line); border-radius:12px; padding:20px 18px;
+  box-shadow:inset 0 0 30px #000, 0 4px 0 #0a0703}
+.window{position:relative; height:190px; border-radius:10px; border:1px solid #332614;
+  background:linear-gradient(180deg,#100b05,#1c1309); overflow:hidden;
+  box-shadow:inset 0 6px 18px #000}
+.reel{position:absolute; top:26px; width:118px; height:118px}
+.reel.l{left:26px}.reel.r{right:26px}
+.pack{position:absolute; inset:0; border-radius:50%;
+  background:radial-gradient(circle,#6b4a22 0%,#3a2812 62%,#241708 100%);
+  transform:scale(var(--pack,.6)); box-shadow:inset 0 0 14px #000}
+.hub{position:absolute; inset:24%; border-radius:50%; border:3px solid #d9c08b;
+  background:repeating-conic-gradient(#d9c08b 0 16deg,#241b0e 16deg 60deg);
+  animation:spin var(--reelDur,2.4s) linear infinite; animation-play-state:paused}
+body.playing .hub{animation-play-state:running}
+.hub::after{content:""; position:absolute; inset:30%; border-radius:50%; background:#120c05; border:2px solid #060402}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tape-line{position:absolute; left:70px; right:70px; bottom:22px; height:4px; background:#0a0603; border-radius:2px; box-shadow:0 -1px 0 #ffffff14}
+.cassette-label{margin-top:16px; background:#f5ecd8; color:#3a2c17; border-radius:6px; padding:10px 14px;
+  font-family:'Bungee'; font-size:.8rem; letter-spacing:.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  border-top:3px solid var(--red); border-bottom:3px solid #2b5aa0; box-shadow:0 3px 8px #00000077}
+
+/* ── màn LCD + điều khiển ─────────────────────── */
+.lcd{background:var(--lcd-bg); border:1px solid #1d3527; border-radius:10px; padding:14px 16px;
+  box-shadow:inset 0 0 24px #000c; position:relative; overflow:hidden}
+.lcd::after{content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.16) 2px 4px)}
+.lcd-title{font:600 17px 'IBM Plex Mono'; color:var(--lcd-ink); text-shadow:0 0 10px rgba(255,217,138,.55);
+  white-space:nowrap; overflow:hidden; margin-bottom:10px}
+.lcd-title.scroll{display:flex}
+.lcd-title.scroll span{flex:none; animation:marq var(--marqDur,14s) linear infinite; padding-right:2.5em}
+@keyframes marq{to{transform:translateX(-100%)}}
+.lcd-row{display:flex; align-items:center; gap:12px}
+.lcd-time{font:500 13px 'IBM Plex Mono'; color:var(--lcd-ink); min-width:44px}
+#vu{width:100%; height:46px; margin-top:12px; image-rendering:pixelated; display:block}
+
+input[type=range]{-webkit-appearance:none; appearance:none; height:6px; border-radius:3px; outline:none; cursor:pointer;
+  background:linear-gradient(to right,var(--amber) var(--fill,0%),#33271a var(--fill,0%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffe0a3,#e08c00); border:2px solid #7a4c00; box-shadow:0 2px 5px #000a; transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#f0a028;border:2px solid #7a4c00}
+#seek{flex:1}
+
+.transport{display:flex; align-items:center; justify-content:center; gap:14px; margin:20px 0 6px; flex-wrap:wrap}
+.tbtn{width:54px; height:54px; border-radius:50%; border:1px solid var(--line2); cursor:pointer; color:var(--ink);
+  background:linear-gradient(180deg,#3b2e1c,#241b0f); display:grid; place-items:center;
+  box-shadow:0 4px 0 #0b0703, inset 0 1px 0 #ffffff14; transition:transform .1s, box-shadow .1s, color .2s, border-color .2s}
+.tbtn:hover{color:var(--amber); border-color:var(--amber)}
+.tbtn:active{transform:translateY(3px); box-shadow:0 1px 0 #0b0703, inset 0 1px 0 #ffffff14}
+.tbtn svg{width:22px; height:22px; fill:currentColor}
+.tbtn.main{width:76px; height:76px; color:#231503; border-color:#b96f00;
+  background:linear-gradient(180deg,#ffc257,#f0920e); box-shadow:0 5px 0 #6b3f00, inset 0 1px 0 #ffffff66}
+.tbtn.main:hover{color:#000; filter:brightness(1.08)}
+.tbtn.main svg{width:30px; height:30px}
+.tbtn.sm{width:46px; height:46px; position:relative}
+.tbtn.sm .led{position:absolute; top:6px; right:8px; width:6px; height:6px; border-radius:50%; background:#3a2c1c; transition:.2s}
+.tbtn.sm.on{color:var(--amber); border-color:var(--amber)}
+.tbtn.sm.on .led{background:var(--green); box-shadow:0 0 8px var(--green)}
+
+.knobs{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px}
+@media(max-width:520px){.knobs{grid-template-columns:1fr}}
+.kbox{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px 14px}
+.klabel{font:600 10px 'IBM Plex Mono'; letter-spacing:.22em; color:var(--dim); display:flex; justify-content:space-between; margin-bottom:10px}
+.klabel b{color:var(--amber)}
+.krow{display:flex; align-items:center; gap:10px}
+.krow input[type=range]{flex:1}
+.stepbtn{width:34px; height:34px; flex:none; border-radius:8px; border:1px solid var(--line2); cursor:pointer;
+  background:linear-gradient(180deg,#342818,#20170c); color:var(--ink); font:700 18px 'IBM Plex Mono';
+  box-shadow:0 2px 0 #0b0703; transition:.15s}
+.stepbtn:hover{color:var(--amber); border-color:var(--amber)}
+.stepbtn:active{transform:translateY(2px); box-shadow:none}
+.iconbtn{width:34px; height:34px; flex:none; border-radius:8px; border:1px solid var(--line2); cursor:pointer;
+  background:linear-gradient(180deg,#342818,#20170c); color:var(--ink); display:grid; place-items:center; transition:.15s}
+.iconbtn:hover{color:var(--amber)}
+.iconbtn svg{width:18px; height:18px; fill:currentColor}
+#speedVal{font:600 15px 'IBM Plex Mono'; color:var(--lcd-ink); background:var(--lcd-bg); padding:7px 10px; border-radius:6px; cursor:pointer; min-width:64px; text-align:center; box-shadow:inset 0 0 10px #000}
+
+/* ── danh sách băng ───────────────────────────── */
+.grid2{display:grid; grid-template-columns:1.5fr 1fr; gap:22px; margin-top:22px}
+@media(max-width:920px){.grid2{grid-template-columns:1fr}}
+.plist-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.count{font:500 12px 'IBM Plex Mono'; color:var(--dim); letter-spacing:.1em}
+.mini-btn{margin-left:auto; font:600 11px 'IBM Plex Mono'; letter-spacing:.14em; color:var(--amber);
+  background:none; border:1px solid var(--line2); border-radius:6px; padding:7px 12px; cursor:pointer; transition:.2s}
+.mini-btn:hover{background:#2c2111; border-color:var(--amber); box-shadow:0 0 12px rgba(255,176,58,.2)}
+#trackList{list-style:none; margin:8px 0 0; padding:0; max-height:430px; overflow-y:auto}
+#trackList::-webkit-scrollbar{width:8px}
+#trackList::-webkit-scrollbar-thumb{background:#3d3020; border-radius:4px}
+.row{display:grid; grid-template-columns:46px 1fr auto; align-items:center; gap:12px;
+  padding:12px 12px; border-bottom:1px dashed #33271688; cursor:pointer; transition:transform .18s, background .18s; border-left:3px solid transparent}
+.row:hover{background:#2a2013; transform:translateX(5px)}
+.row.current{background:linear-gradient(90deg,#3a2a10,#241b1000); border-left-color:var(--amber)}
+.num{font:500 13px 'IBM Plex Mono'; color:var(--dim)}
+.row.current .num{color:var(--amber)}
+.eq{display:none; gap:2px; align-items:flex-end; height:14px}
+.eq i{width:3px; background:var(--amber); animation:eq .7s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.25s}.eq i:nth-child(3){animation-delay:.5s}
+@keyframes eq{0%,100%{height:4px}50%{height:14px}}
+body.playing .row.current .num{display:none}
+body.playing .row.current .eq{display:flex}
+.ttl{font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.ttl em{font-style:normal; font:500 10px 'IBM Plex Mono'; color:var(--red); letter-spacing:.1em; margin-left:8px}
+.dur{font:500 12px 'IBM Plex Mono'; color:var(--dim)}
+.list-note{padding:26px 10px; color:var(--mut); font-size:14px; line-height:1.7}
+.list-note b{color:var(--amber)}
+.setup ol{margin:10px 0; padding-left:20px}
+.setup li{margin:8px 0}
+.setup code{font:600 12.5px 'IBM Plex Mono'; color:var(--amber); background:#00000055; padding:2px 6px; border-radius:4px}
+
+/* ── gửi băng (upload) ────────────────────────── */
+.drop{border:1.5px dashed var(--line2); border-radius:10px; padding:26px 16px; text-align:center; cursor:pointer;
+  transition:.25s; background:#191208}
+.drop:hover,.drop.drag{border-color:var(--amber); background:#2a2010; box-shadow:0 0 24px rgba(255,176,58,.15) inset}
+.drop .big{font-size:30px}
+.drop p{margin:8px 0 2px; font-weight:600}
+.drop small{color:var(--dim); font-size:12px}
+.field{margin-top:12px}
+.field label{display:block; font:600 10px 'IBM Plex Mono'; letter-spacing:.2em; color:var(--dim); margin-bottom:6px}
+.field input{width:100%; background:#0f0b06; border:1px solid var(--line); border-radius:7px; color:var(--ink);
+  padding:9px 11px; font:500 13px 'IBM Plex Mono'; outline:none; transition:border-color .2s}
+.field input:focus{border-color:var(--amber)}
+.field-row{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+@media(max-width:520px){.field-row{grid-template-columns:1fr 1fr}}
+.pbar{height:8px; background:#0f0b06; border:1px solid var(--line); border-radius:4px; overflow:hidden; margin-top:14px; display:none}
+.pbar i{display:block; height:100%; width:0%; background:linear-gradient(90deg,var(--amber2),var(--amber)); transition:width .2s}
+#upLog{margin-top:12px; background:#0a0805; border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+  font:500 11.5px/1.8 'IBM Plex Mono'; color:var(--green); max-height:120px; overflow-y:auto; display:none; white-space:pre-wrap}
+.btn{font-family:'Bungee'; font-size:.8rem; letter-spacing:.08em; color:#231503; cursor:pointer;
+  background:linear-gradient(180deg,#ffc257,#f0920e); border:1px solid #b96f00; border-radius:9px; padding:11px 18px;
+  box-shadow:0 4px 0 #6b3f00; transition:.12s; margin-top:14px}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 #6b3f00}
+.btn:disabled{filter:grayscale(.7); opacity:.55; cursor:not-allowed}
+.linklike{background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;text-decoration:underline; margin-top:10px}
+.linklike:hover{color:var(--mut)}
+details{margin-top:16px; border-top:1px dashed var(--line); padding-top:12px; color:var(--mut); font-size:13.5px; line-height:1.75}
+summary{cursor:pointer; color:var(--amber); font-weight:600}
+details code{font:600 12px 'IBM Plex Mono'; color:var(--amber); background:#00000055; padding:1px 5px; border-radius:4px}
+
+footer{margin-top:34px; text-align:center; color:var(--dim); font:500 12px 'IBM Plex Mono'; letter-spacing:.12em}
+
+/* ── toast ────────────────────────────────────── */
+#toasts{position:fixed; right:18px; bottom:18px; z-index:50; display:flex; flex-direction:column; gap:10px}
+.toast{background:#241b10; border:1px solid var(--line2); border-left:4px solid var(--amber); color:var(--ink);
+  padding:12px 16px; border-radius:8px; font-size:13.5px; max-width:320px; box-shadow:0 10px 24px #000a;
+  animation:tin .3s ease}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes tin{from{opacity:0; transform:translateX(24px)}}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<div class="ticker"><div class="ticker-in" id="tickerIn"></div></div>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="lamp" id="lamp"></div>
+    <div>
+      <div class="lamp-tag" id="lampTag">NGHỈ</div>
+      <h1 class="station" id="stationName" contenteditable="true" spellcheck="false" title="Nhấn để đổi tên trạm"></h1>
+    </div>
+    <div class="clock" id="clock">--:--</div>
+  </header>
+
+  <!-- ĐẦU MÁY -->
+  <section class="panel" id="deckPanel">
+    <i class="sc sc1"></i><i class="sc sc2"></i><i class="sc sc3"></i><i class="sc sc4"></i>
+    <h2 class="ptitle">ĐẦU BĂNG <small>· nhấn tên bài trong danh sách để phát</small></h2>
+    <div class="deck-grid">
+      <div class="cassette" id="cassette">
+        <div class="window">
+          <div class="reel l"><div class="pack" id="packL"></div><div class="hub"></div></div>
+          <div class="reel r"><div class="pack" id="packR"></div><div class="hub"></div></div>
+          <div class="tape-line"></div>
+        </div>
+        <div class="cassette-label" id="tapeLabel">Chưa có băng trong máy…</div>
+      </div>
+
+      <div>
+        <div class="lcd">
+          <div class="lcd-title" id="lcdTitle">CHỜ BĂNG…</div>
+          <div class="lcd-row">
+            <span class="lcd-time" id="timeCur">00:00</span>
+            <input type="range" id="seek" min="0" max="1000" value="0">
+            <span class="lcd-time" id="timeDur">00:00</span>
+          </div>
+          <canvas id="vu" width="480" height="64"></canvas>
+        </div>
+
+        <div class="transport">
+          <button class="tbtn sm" id="btnShuffle" title="Xáo bài">
+            <span class="led"></span>
+            <svg viewBox="0 0 24 24"><path d="M17 4h4v4h-2V7.4l-4.3 4.3-1.4-1.4L17.6 6H17V4zM3 6h4.6l3.1 3.1-1.4 1.4L6.8 8H3V6zm14.6 10H17v2h4v-4h-2v1.6l-4.3-4.3-1.4 1.4 4.3 4.3zM3 16h3.8l2.5-2.5 1.4 1.4L7.6 18H3v-2z"/></svg>
+          </button>
+          <button class="tbtn" id="btnPrev" title="Bài trước">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2.4v12H6zM20 6v12l-9.5-6z"/></svg>
+          </button>
+          <button class="tbtn main" id="btnPlay" title="Phát / Dừng">
+            <svg viewBox="0 0 24 24" id="icoPlay"><path d="M8 5v14l11-7z"/></svg>
+            <svg viewBox="0 0 24 24" id="icoPause" hidden><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>
+          </button>
+          <button class="tbtn" id="btnNext" title="Bài sau">
+            <svg viewBox="0 0 24 24"><path d="M15.6 6H18v12h-2.4zM4 6v12l9.5-6z"/></svg>
+          </button>
+          <button class="tbtn sm" id="btnAuto" title="Tự động phát liên tục">
+            <span class="led"></span>
+            <svg viewBox="0 0 24 24"><path d="M17 3l4 4-4 4V8H8a3 3 0 0 0-3 3v1H3v-1a5 5 0 0 1 5-5h9V3zM7 21l-4-4 4-4v3h9a3 3 0 0 0 3-3v-1h2v1a5 5 0 0 1-5 5H7v3z"/></svg>
+          </button>
+        </div>
+
+        <div class="knobs">
+          <div class="kbox">
+            <div class="klabel">ÂM LƯỢNG <b id="volVal">80%</b></div>
+            <div class="krow">
+              <button class="iconbtn" id="btnMute" title="Tắt tiếng">
+                <svg viewBox="0 0 24 24" id="icoVol"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+                <svg viewBox="0 0 24 24" id="icoMute" hidden><path d="M3 9v6h4l5 5V4L7 9H3zm18.2 3l2.3-2.3-1.4-1.4-2.3 2.3-2.3-2.3-1.4 1.4 2.3 2.3-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4z"/></svg>
+              </button>
+              <input type="range" id="vol" min="0" max="100" value="80">
+            </div>
+          </div>
+          <div class="kbox">
+            <div class="klabel">TỐC ĐỘ PHÁT <b>0.5× – 2×</b></div>
+            <div class="krow">
+              <button class="stepbtn" id="btnSlow" title="Chậm lại">−</button>
+              <span id="speedVal" title="Nhấn đôi để về 1×">1.00×</span>
+              <button class="stepbtn" id="btnFast" title="Nhanh hơn">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid2">
+
+    <!-- DANH SÁCH -->
+    <section class="panel">
+      <i class="sc sc1"></i><i class="sc sc2"></i><i class="sc sc3"></i><i class="sc sc4"></i>
+      <div class="plist-head">
+        <h2 class="ptitle" style="margin:0">DANH SÁCH BĂNG</h2>
+        <span class="count" id="trackCount"></span>
+        <button class="mini-btn" id="btnRefresh">↻ LÀM MỚI</button>
+      </div>
+      <ol id="trackList"></ol>
+      <div class="list-note" id="listNote" hidden></div>
+    </section>
+
+    <!-- UPLOAD -->
+    <section class="panel">
+      <i class="sc sc1"></i><i class="sc sc2"></i><i class="sc sc3"></i><i class="sc sc4"></i>
+      <h2 class="ptitle">GỬI BĂNG MỚI VÀO KHO</h2>
+      <div class="drop" id="drop">
+        <div class="big">📼</div>
+        <p>Kéo thả tệp nhạc vào đây, hoặc nhấn để chọn</p>
+        <small>mp3 · m4a · wav · ogg · flac — khoảng trắng tự biến thành dấu _</small>
+        <input type="file" id="fileIn" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple hidden>
+      </div>
+
+      <div class="field-row">
+        <div class="field"><label>GITHUB USER</label><input id="inOwner" spellcheck="false"></div>
+        <div class="field"><label>REPO</label><input id="inRepo" spellcheck="false"></div>
+        <div class="field"><label>BRANCH</label><input id="inBranch" spellcheck="false"></div>
+      </div>
+      <div class="field"><label>FINE-GRAINED TOKEN (quyền Contents: Read &amp; Write)</label>
+        <input type="password" id="inToken" placeholder="github_pat_…" spellcheck="false">
+      </div>
+
+      <button class="btn" id="btnSaveCfg">LƯU CÀI ĐẶT</button>
+      <div class="pbar" id="pbar"><i id="pfill"></i></div>
+      <div id="upLog"></div>
+      <button class="linklike" id="btnReset">↺ Đặt lại toàn bộ cài đặt về mặc định</button>
+
+      <details>
+        <summary>Làm sao để lấy token upload?</summary>
+        GitHub Pages là trang tĩnh, nên trang này dùng <b>GitHub API</b> để tự commit tệp nhạc vào repo thay bạn. Cách lấy token:<br>
+        1. Vào <code>github.com → Settings → Developer settings → Fine-grained tokens → Generate new token</code>.<br>
+        2. Chọn <b>đúng 1 repo</b> này, thời hạn tùy ý.<br>
+        3. Mục <b>Repository permissions → Contents</b>: chọn <code>Read and write</code>.<br>
+        4. Dán token vào ô phía trên rồi <b>LƯU CÀI ĐẶT</b>.<br><br>
+        ⚠️ Token nằm trong trình duyệt của bạn (localStorage) và repo phải <b>public</b>. Chỉ dùng token giới hạn đúng 1 repo — đừng dùng token full quyền. Sau khi upload, chờ GitHub Pages build lại <b>~1 phút</b> rồi bấm LÀM MỚI.
+      </details>
+    </section>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<div id="toasts"></div>
+<audio id="player" preload="auto"></audio>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   CẤU HÌNH — SỬA 3 DÒNG ĐẦU RỒI MỚI ĐĂNG LÊN GITHUB PAGES
+   ════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  owner:  'TEN-BAN',        // ← tên tài khoản GitHub của bạn
+  repo:   'TEN-REPO',       // ← tên repo chứa trang này
+  branch: 'main',
+  musicDir: 'music',        // folder chứa nhạc (để nguyên nếu dùng cấu trúc gợi ý)
+  stationName: 'BĂNG NHẠC CỦA TÔI'
+};
+/* ════════════════════════════════════════════════════════════ */
+
+const $ = s => document.querySelector(s);
+const audio = $('#player');
+const AUDIO_EXT = /\.(mp3|m4a|wav|ogg|oga|flac|aac)$/i;
+
+/* ---------- cài đặt (lưu localStorage) ---------- */
+function loadSettings(){
+  let s = {};
+  try{ s = JSON.parse(localStorage.getItem('tape.settings')||'{}'); }catch(e){}
+  return Object.assign({
+    volume:.8, muted:false, speed:1, shuffle:false, auto:true,
+    station:'', owner:CONFIG.owner, repo:CONFIG.repo, branch:CONFIG.branch, token:''
+  }, s);
+}
+const S = { tracks:[], queue:[], qPos:-1, current:-1, playing:false, settings:loadSettings(), seeking:false };
+function saveSettings(){ localStorage.setItem('tape.settings', JSON.stringify(S.settings)); }
+
+const apiBase = () => `https://api.github.com/repos/${S.settings.owner}/${S.settings.repo}`;
+function authHeaders(){
+  const h = {Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
+  if(S.settings.token) h.Authorization = 'Bearer '+S.settings.token;
+  return h;
+}
+const fmt = t => { if(!isFinite(t)) return '--:--'; t=Math.round(t);
+  return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); };
+
+/* tên bài = tên file bỏ đuôi, dấu _ thành khoảng trắng */
+const titleFrom = n => decodeURIComponent(n).replace(/\.[^.]+$/,'').replace(/_/g,' ').trim();
+
+function toast(msg, type=''){ const t=document.createElement('div');
+  t.className='toast '+type; t.textContent=msg; $('#toasts').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0'; t.style.transition='.4s'; setTimeout(()=>t.remove(),400);},4200); }
+
+/* ---------- lấy danh sách bài từ GitHub ---------- */
+async function fetchTracks(){
+  if(!S.settings.owner || S.settings.owner.includes('TEN-BAN')){ renderSetup(); return; }
+  $('#listNote').hidden=false; $('#listNote').innerHTML='Đang đọc kho băng…';
+  $('#trackList').innerHTML='';
+  const etag = localStorage.getItem('tape.etag')||'';
+  try{
+    const r = await fetch(`${apiBase()}/contents/${CONFIG.musicDir}?ref=${S.settings.branch}`,
+      {headers:{...authHeaders(), ...(etag?{'If-None-Match':etag}:{})}});
+    let list;
+    if(r.status===304){ list = JSON.parse(localStorage.getItem('tape.cache')||'[]'); }
+    else{
+      if(!r.ok) throw new Error('HTTP '+r.status+(r.status===404?' — không thấy thư mục '+CONFIG.musicDir:''));
+      const data = await r.json();
+      const e = r.headers.get('etag'); if(e){ localStorage.setItem('tape.etag',e); }
+      list = data.filter(f=>f.type==='file'&&AUDIO_EXT.test(f.name))
+                 .map(f=>({name:f.name, title:titleFrom(f.name),
+                           url:CONFIG.musicDir+'/'+encodeURIComponent(f.name), duration:null}));
+      list.sort((a,b)=>a.title.localeCompare(b.title,'vi'));
+      localStorage.setItem('tape.cache', JSON.stringify(list));
+    }
+    S.tracks=list; renderTracks(); loadDurations();
+  }catch(err){
+    const cached = localStorage.getItem('tape.cache');
+    if(cached){ S.tracks=JSON.parse(cached); renderTracks(); toast('Không gọi được GitHub, dùng danh sách cũ.','err'); }
+    else renderSetup(err.message);
+  }
+}
+
+function renderTracks(){
+  const ol=$('#trackList'), note=$('#listNote');
+  ol.innerHTML=''; $('#trackCount').textContent=S.tracks.length? S.tracks.length+' BÀI':'';
+  if(!S.tracks.length){ note.hidden=false;
+    note.innerHTML='Thư mục <b>'+CONFIG.musicDir+'</b> đang trống. Thả bài đầu tiên vào ô <b>GỬI BĂNG MỚI</b> bên dưới, hoặc đẩy file lên repo rồi bấm LÀM MỚI.';
+    return; }
+  note.hidden=true;
+  S.tracks.forEach((t,i)=>{
+    const li=document.createElement('li'); li.className='row'+(i===S.current?' current':''); li.dataset.i=i;
+    li.innerHTML=`<span><span class="num">${String(i+1).padStart(2,'0')}</span>
+      <span class="eq"><i></i><i></i><i></i></span></span>
+      <span class="ttl">${esc(t.title)}${t.pending?'<em>CHỜ BUILD…</em>':''}</span>
+      <span class="dur">${t.duration?fmt(t.duration):'–:–'}</span>`;
+    li.onclick=()=>playTrack(i);
+    ol.appendChild(li);
+  });
+}
+const esc = s => s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function renderSetup(err){
+  $('#trackCount').textContent=''; $('#trackList').innerHTML='';
+  const n=$('#listNote'); n.hidden=false;
+  n.innerHTML = err
+    ? `<div class="setup">⚠️ <b>${esc(err)}</b><br>Kiểm tra: repo đã để <b>public</b>? Đã tạo thư mục <code>${CONFIG.musicDir}</code>? CONFIG trong index.html đã điền đúng?</div>`
+    : `<div class="setup"><b>Chào mừng! Setup nhanh trong 4 bước:</b>
+      <ol>
+        <li>Tạo repo <b>public</b>, bật GitHub Pages (<code>Settings → Pages → Branch: main</code>).</li>
+        <li>Tạo thư mục <code>music</code> trong repo để chứa bài hát.</li>
+        <li>Mở <code>index.html</code>, sửa khối <code>CONFIG</code> ở đầu file (owner, repo).</li>
+        <li>Muốn upload ngay từ trang? Tạo <b>fine-grained token</b> (hướng dẫn ở ô bên phải) rồi dán vào.</li>
+      </ol></div>`;
+}
+
+/* đọc thời lượng từng bài (chạy nền, lần lượt) */
+async function loadDurations(){
+  for(const t of S.tracks){
+    if(t.duration || t.pending) continue;
+    await new Promise(res=>{
+      const a=new Audio(); a.preload='metadata'; a.src=t.url;
+      const done=()=>{ if(a.duration&&isFinite(a.duration)){t.duration=a.duration;
+        const row=document.querySelector(`.row[data-i="${S.tracks.indexOf(t)}"] .dur`);
+        if(row) row.textContent=fmt(t.duration);} a.src=''; res(); };
+      a.onloadedmetadata=done; a.onerror=()=>{a.src='';res();}; setTimeout(done,9000);
+    });
+  }
+}
+
+/* ---------- hàng đợi / xáo bài ---------- */
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function buildQueue(start){
+  const rest=S.tracks.map((_,i)=>i).filter(i=>i!==start);
+  if(S.settings.shuffle) shuffleArr(rest);
+  S.queue=[start,...rest]; S.qPos=0;
+}
+function playTrack(i, opts={}){
+  const t=S.tracks[i]; if(!t) return;
+  S.current=i; if(opts.rebuild!==false) buildQueue(i);
+  ensureGraph();
+  audio.src=t.url; audio.playbackRate=S.settings.speed;
+  try{ audio.preservePitch=true; }catch(e){}
+  setLCDTitle(t.title); $('#tapeLabel').textContent=t.title;
+  document.title='▶ '+t.title;
+  renderTracks();
+  audio.play().catch(()=>{ if(!opts.silent) toast('Trình duyệt chặn tự động phát — nhấn nút ▶ để bắt đầu.','err'); });
+}
+function next(){
+  if(!S.tracks.length) return;
+  if(S.qPos+1<S.queue.length){ S.qPos++; playTrack(S.queue[S.qPos],{rebuild:false}); }
+  else{
+    const start=S.settings.shuffle?Math.floor(Math.random()*S.tracks.length):0;
+    buildQueue(start); playTrack(start,{rebuild:false,silent:true});
+  }
+}
+function prev(){
+  if(audio.currentTime>3){ audio.currentTime=0; return; }
+  if(S.qPos>0){ S.qPos--; playTrack(S.queue[S.qPos],{rebuild:false}); }
+}
+audio.addEventListener('ended',()=>{ if(S.settings.auto) next(); else S.playing=false; });
+audio.addEventListener('play', ()=>{ S.playing=true;  document.body.classList.add('playing');  syncPlayUI(); });
+audio.addEventListener('pause',()=>{ S.playing=false; document.body.classList.remove('playing'); syncPlayUI(); });
+
+function syncPlayUI(){
+  $('#icoPlay').hidden=S.playing; $('#icoPause').hidden=!S.playing;
+  $('#lampTag').textContent=S.playing?'ON AIR':'NGHỈ';
+}
+
+/* ---------- LCD + tiêu đề chạy chữ ---------- */
+function setLCDTitle(text){
+  const el=$('#lcdTitle'); el.innerHTML=''; el.classList.remove('scroll');
+  const s=document.createElement('span'); s.textContent=text; el.appendChild(s);
+  requestAnimationFrame(()=>{
+    if(s.scrollWidth>el.clientWidth){
+      el.classList.add('scroll'); el.appendChild(s.cloneNode(true));
+      el.style.setProperty('--marqDur', Math.max(8,text.length*.35)+'s');
+    }
+  });
+}
+
+/* ---------- seek / thời gian / cuộn băng ---------- */
+audio.addEventListener('timeupdate',()=>{
+  const d=audio.duration||0, c=audio.currentTime;
+  $('#timeCur').textContent=fmt(c); $('#timeDur').textContent=fmt(d);
+  if(!S.seeking){ const v=d?c/d*1000:0; $('#seek').value=v; paintRange($('#seek')); }
+  const p=d?c/d:0;
+  $('#packL').style.setProperty('--pack',(1-.45*p).toFixed(3));
+  $('#packR').style.setProperty('--pack',(.55+.45*p).toFixed(3));
+});
+$('#seek').addEventListener('input',e=>{ S.seeking=true; paintRange(e.target);
+  if(audio.duration) $('#timeCur').textContent=fmt(e.target.value/1000*audio.duration); });
+$('#seek').addEventListener('change',e=>{ S.seeking=false;
+  if(audio.duration) audio.currentTime=e.target.value/1000*audio.duration; });
+function paintRange(r){ r.style.setProperty('--fill',(r.value-r.min)/(r.max-r.min)*100+'%'); }
+
+/* ---------- volume / speed ---------- */
+function applyVolume(){
+  audio.volume=S.settings.volume; audio.muted=S.settings.muted;
+  $('#vol').value=Math.round(S.settings.volume*100); paintRange($('#vol'));
+  $('#volVal').textContent=S.settings.muted?'TẮT':Math.round(S.settings.volume*100)+'%';
+  $('#icoVol').hidden=S.settings.muted; $('#icoMute').hidden=!S.settings.muted;
+}
+$('#vol').addEventListener('input',e=>{ S.settings.volume=e.target.value/100; S.settings.muted=false; applyVolume(); saveSettings(); });
+$('#btnMute').onclick=()=>{ S.settings.muted=!S.settings.muted; applyVolume(); saveSettings(); };
+
+function applySpeed(){
+  audio.playbackRate=S.settings.speed;
+  $('#speedVal').textContent=S.settings.speed.toFixed(2)+'×';
+  document.documentElement.style.setProperty('--reelDur',(2.4/S.settings.speed)+'s');
+}
+$('#btnSlow').onclick=()=>{ S.settings.speed=Math.max(.5,+(S.settings.speed-.25).toFixed(2)); applySpeed(); saveSettings(); };
+$('#btnFast').onclick=()=>{ S.settings.speed=Math.min(2,+(S.settings.speed+.25).toFixed(2)); applySpeed(); saveSettings(); };
+$('#speedVal').ondblclick=()=>{ S.settings.speed=1; applySpeed(); saveSettings(); };
+
+/* ---------- nút transport ---------- */
+$('#btnPlay').onclick=()=>{ ensureGraph();
+  if(!audio.src && S.tracks.length){ playTrack(S.settings.shuffle?Math.floor(Math.random()*S.tracks.length):0); return; }
+  audio.paused ? audio.play().catch(()=>{}) : audio.pause(); };
+$('#btnNext').onclick=next;
+$('#btnPrev').onclick=prev;
+$('#btnShuffle').onclick=()=>{ S.settings.shuffle=!S.settings.shuffle;
+  $('#btnShuffle').classList.toggle('on',S.settings.shuffle);
+  if(S.current>=0) buildQueue(S.current); saveSettings();
+  toast(S.settings.shuffle?'Đã xáo hàng đợi 🔀':'Phát theo thứ tự bảng chữ cái'); };
+$('#btnAuto').onclick=()=>{ S.settings.auto=!S.settings.auto;
+  $('#btnAuto').classList.toggle('on',S.settings.auto); saveSettings();
+  toast(S.settings.auto?'Tự động phát: BẬT — hết bài sẽ qua bài kế':'Tự động phát: TẮT'); };
+
+/* ---------- VU meter (Web Audio, có chế độ giả lập) ---------- */
+let actx=null, analyser=null, freq=null, pkL=0, pkR=0;
+function ensureGraph(){
+  if(actx){ if(actx.state==='suspended') actx.resume(); return; }
+  try{
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    const src=actx.createMediaElementSource(audio);
+    analyser=actx.createAnalyser(); analyser.fftSize=512;
+    src.connect(analyser); analyser.connect(actx.destination);
+    freq=new Uint8Array(analyser.frequencyBinCount);
+  }catch(e){ analyser=null; }
+}
+const vu=$('#vu'), vctx=vu.getContext('2d');
+function seg(x,y,w,h,on,i){ vctx.fillStyle=on?(i<11?'#3fae5a':i<15?'#ffb03a':'#ff4b33'):'#221a10'; vctx.fillRect(x,y,w,h); }
+function drawVU(){
+  requestAnimationFrame(drawVU);
+  let lv=0, rv=0;
+  if(analyser && S.playing){ analyser.getByteFrequencyData(freq);
+    const avg=(a,b)=>{let s=0;for(let i=a;i<b;i++)s+=freq[i];return s/(b-a)/255;};
+    lv=avg(2,42)*1.3; rv=avg(42,170)*1.4;
+  }else if(S.playing){ lv=.25+Math.random()*.3; rv=.25+Math.random()*.3; }
+  pkL=Math.max(Math.min(lv,1),pkL*.88); pkR=Math.max(Math.min(rv,1),pkR*.88);
+  vctx.clearRect(0,0,vu.width,vu.height);
+  const N=18, bw=Math.floor((vu.width/2-14)/N);
+  [[pkL,8],[pkR,vu.width/2+8]].forEach(([lv,x0])=>{
+    for(let i=0;i<N;i++){ const segOn=i/N<=lv;
+      for(let r=0;r<2;r++) seg(x0+i*bw, 6+r*28, bw-3, 22, segOn, i);
+    }
+  });
+}
+drawVU();
+
+/* ---------- upload qua GitHub API ---------- */
+const drop=$('#drop'), fileIn=$('#fileIn');
+drop.onclick=()=>fileIn.click();
+drop.ondragover=e=>{e.preventDefault(); drop.classList.add('drag');};
+drop.ondragleave=()=>drop.classList.remove('drag');
+drop.ondrop=e=>{e.preventDefault(); drop.classList.remove('drag'); uploadFiles(e.dataTransfer.files);};
+fileIn.onchange=()=>{ uploadFiles(fileIn.files); fileIn.value=''; };
+
+function logLine(msg){ const l=$('#upLog'); l.style.display='block'; l.textContent+=msg+'\n'; l.scrollTop=l.scrollHeight; }
+function bufToB64(buf){ const b=new Uint8Array(buf), parts=[]; const CH=0x8000;
+  for(let i=0;i<b.length;i+=CH) parts.push(String.fromCharCode.apply(null,b.subarray(i,i+CH)));
+  return btoa(parts.join('')); }
+
+async function getSha(path){
+  const r=await fetch(`${apiBase()}/contents/${path}?ref=${S.settings.branch}`,{headers:authHeaders()});
+  if(r.status===404) return null;
+  if(!r.ok) throw new Error('HTTP '+r.status+' khi kiểm tra file');
+  return (await r.json()).sha;
+}
+function putContent(path, b64, sha, onProgress){
+  return new Promise((res,rej)=>{
+    const x=new XMLHttpRequest();
+    x.open('PUT',`${apiBase()}/contents/${path}`);
+    Object.entries({...authHeaders(),'Content-Type':'application/json'}).forEach(([k,v])=>x.setRequestHeader(k,v));
+    x.upload.onprogress=e=>{ if(e.lengthComputable) onProgress(e.loaded/e.total); };
+    x.onload=()=>{ try{ const j=JSON.parse(x.responseText);
+      if(x.status===201||x.status===200) res(j); else rej(Object.assign(new Error(j.message||'HTTP '+x.status),{status:x.status}));
+    }catch(e){ rej(new Error('HTTP '+x.status)); } };
+    x.onerror=()=>rej(new Error('Lỗi mạng'));
+    x.send(JSON.stringify({message:'🎵 Thêm bài mới: '+decodeURIComponent(path.split('/').pop()),
+      content:b64, branch:S.settings.branch, ...(sha?{sha}:{})}));
+  });
+}
+async function uploadFiles(files){
+  const list=[...files].filter(f=>AUDIO_EXT.test(f.name));
+  if(!list.length){ toast('Không thấy tệp âm thanh hợp lệ.','err'); return; }
+  if(!S.settings.token){ toast('Cần token GitHub để upload — xem hướng dẫn bên dưới ô này.','err'); return; }
+  const bar=$('#pbar'), fill=$('#pfill'); bar.style.display='block';
+  let ok=0;
+  for(const f of list){
+    let name=f.name.replace(/\s+/g,'_');
+    logLine('▸ '+f.name+' ('+(f.size/1048576).toFixed(1)+' MB)…');
+    try{
+      if(f.size>100*1048576) throw new Error('vượt 100MB — GitHub API không nhận');
+      const b64=bufToB64(await f.arrayBuffer());
+      const path=CONFIG.musicDir+'/'+encodeURIComponent(name);
+      try{ await putContent(path,b64,null,p=>{fill.style.width=(p*100)+'%';}); }
+      catch(e){ if(e.status===422){ const sha=await getSha(path);
+          if(sha){ logLine('  file đã tồn tại — ghi đè'); await putContent(path,b64,sha,p=>{fill.style.width=(p*100)+'%';}); }
+          else throw e; } else throw e; }
+      ok++; logLine('  ✔ xong');
+      if(!S.tracks.some(t=>t.name===name))
+        S.tracks.push({name, title:titleFrom(name), url:CONFIG.musicDir+'/'+encodeURIComponent(name), pending:true});
+    }catch(err){ logLine('  ✘ '+err.message); }
+    fill.style.width='0%';
+  }
+  bar.style.display='none';
+  if(ok){ renderTracks();
+    toast(`Đã tải lên ${ok} bài! Chờ GitHub Pages build ~1 phút rồi bấm LÀM MỚI.`,'ok');
+    setTimeout(fetchTracks,75000);
+  }
+}
+
+/* ---------- lưu / reset cấu hình ---------- */
+['inOwner','inRepo','inBranch','inToken'].forEach(id=>{ $('#'+id).value=S.settings[{inOwner:'owner',inRepo:'repo',inBranch:'branch',inToken:'token'}[id]]; });
+$('#btnSaveCfg').onclick=()=>{
+  S.settings.owner=$('#inOwner').value.trim(); S.settings.repo=$('#inRepo').value.trim();
+  S.settings.branch=$('#inBranch').value.trim()||'main'; S.settings.token=$('#inToken').value.trim();
+  saveSettings(); localStorage.removeItem('tape.etag'); toast('Đã lưu cài đặt.','ok'); fetchTracks();
+};
+$('#btnReset').onclick=()=>{ localStorage.removeItem('tape.settings'); localStorage.removeItem('tape.etag'); location.reload(); };
+$('#btnRefresh').onclick=()=>{ localStorage.removeItem('tape.etag'); fetchTracks(); };
+
+/* ---------- ticker, đồng hồ, station, phím tắt, reveal ---------- */
+function buildTicker(){
+  const st=S.settings.station||CONFIG.stationName;
+  const txt=`★ ${st} — PHÁT TỪ KHO GITHUB ★ SPACE: PHÁT/DỪNG · ↑↓: ÂM LƯỢNG · ←→: TUA 5 GIÂY ★ TÊN BÀI TỰ ĐỌC TỪ TÊN TỆP: Đống_giấy_vụn.mp3 → "Đống giấy vụn" ★ CÓ SÁNG TÁC MỚI? CHỈ CẦN THẢ TỆP VÀO Ô GỬI BĂNG ★ `;
+  $('#tickerIn').innerHTML=`<span>${txt}</span><span>${txt}</span>`;
+}
+const stEl=$('#stationName');
+stEl.textContent=S.settings.station||CONFIG.stationName;
+stEl.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); stEl.blur();} });
+stEl.addEventListener('blur',()=>{ S.settings.station=stEl.textContent.trim(); saveSettings(); buildTicker(); });
+
+setInterval(()=>{ const d=new Date();
+  $('#clock').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); },1000);
+$('#foot').textContent=`© ${new Date().getFullYear()} · dựng thủ công, chạy trên GitHub Pages · SPACE / ↑↓ / ←→`;
+
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'||e.target.isContentEditable) return;
+  if(e.code==='Space'){ e.preventDefault(); $('#btnPlay').click(); }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); S.settings.volume=Math.min(1,S.settings.volume+.05); applyVolume(); saveSettings(); }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); S.settings.volume=Math.max(0,S.settings.volume-.05); applyVolume(); saveSettings(); }
+  else if(e.key==='ArrowRight'){ audio.currentTime=Math.min((audio.duration||0),audio.currentTime+5); }
+  else if(e.key==='ArrowLeft'){ audio.currentTime=Math.max(0,audio.currentTime-5); }
+});
+
+const io='IntersectionObserver' in window
+  ? new IntersectionObserver(es=>es.forEach(x=>{ if(x.isIntersecting){x.target.classList.add('in'); io.unobserve(x.target);} }),{threshold:.08})
+  : null;
+document.querySelectorAll('.panel').forEach(p=> io?io.observe(p):p.classList.add('in'));
+
+/* ---------- khởi động ---------- */
+$('#btnShuffle').classList.toggle('on',S.settings.shuffle);
+$('#btnAuto').classList.toggle('on',S.settings.auto);
+applyVolume(); applySpeed(); buildTicker(); fetchTracks().then(()=>{
+  if(S.settings.auto && S.tracks.length) playTrack(0,{silent:true});
+});
+</script>
+</body>
+</html>
