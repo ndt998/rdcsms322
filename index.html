@@ -1146,3 +1146,90 @@ fetchTracks().then(()=>{
 </script>
 </body>
 </html>
+<!-- === MÀN HÌNH KHÓA MẬT KHẨU (AUTO NHẬP SỐ) === -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Nếu đã mở khóa trong phiên này thì không hiện lại nữa
+  if (sessionStorage.getItem('unlocked_458854') === 'true') return;
+
+  // 1. Tự động chèn CSS vào <head>
+  const css = `
+    #lock-overlay-458854 {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #121212; color: #fff; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 999999;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    #lock-overlay-458854.hidden { display: none !important; }
+    .lock-box-458854 { 
+      text-align: center; background: #1e1e1e; padding: 30px 40px; 
+      border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); 
+      border: 1px solid #333; max-width: 90%; width: 350px;
+    }
+    .lock-box-458854 h2 { margin-top: 0; color: #f39c12; font-size: 1.5em; }
+    .lock-box-458854 p { color: #aaa; margin-bottom: 20px; font-size: 0.95em; }
+    #pwd-input-458854 {
+      padding: 12px; font-size: 1.5em; text-align: center; letter-spacing: 10px;
+      border: 2px solid #444; border-radius: 8px; background: #2a2a2a; color: #fff; 
+      width: 100%; outline: none; box-sizing: border-box;
+    }
+    #pwd-input-458854:focus { border-color: #f39c12; }
+    #unlock-btn-458854 {
+      margin-top: 20px; padding: 12px 30px; font-size: 1.1em; background: #f39c12;
+      color: #111; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
+      width: 100%; transition: 0.2s; box-sizing: border-box;
+    }
+    #unlock-btn-458854:hover { background: #e67e22; }
+    #unlock-btn-458854:active { transform: scale(0.98); }
+    #error-msg-458854 { color: #e74c3c; margin-top: 15px; min-height: 20px; font-size: 0.9em; font-weight: bold; }
+  `;
+  const style = document.createElement('style');
+  style.innerHTML = css;
+  document.head.appendChild(style);
+
+  // 2. Tự động chèn HTML vào đầu <body>
+  const overlayHTML = `
+    <div id="lock-overlay-458854">
+      <div class="lock-box-458854">
+        <h2>🔒 BĂNG ĐƯỢC BẢO VỆ</h2>
+        <p>Vui lòng nhập mã số để mở khóa</p>
+        <input type="password" id="pwd-input-458854" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" autocomplete="off">
+        <br>
+        <button id="unlock-btn-458854">MỞ KHÓA</button>
+        <p id="error-msg-458854"></p>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('afterbegin', overlayHTML);
+
+  // 3. Xử lý logic kiểm tra mật khẩu
+  const CORRECT_PASSWORD = "458854";
+  const overlay = document.getElementById('lock-overlay-458854');
+  const input = document.getElementById('pwd-input-458854');
+  const btn = document.getElementById('unlock-btn-458854');
+  const errorMsg = document.getElementById('error-msg-458854');
+
+  function checkPassword() {
+    if (input.value === CORRECT_PASSWORD) {
+      sessionStorage.setItem('unlocked_458854', 'true');
+      overlay.classList.add('hidden');
+      errorMsg.innerText = "";
+    } else {
+      errorMsg.innerText = "❌ Sai mật khẩu! Vui lòng thử lại.";
+      input.value = "";
+      input.focus();
+      // Rung điện thoại nếu nhập sai
+      if(navigator.vibrate) navigator.vibrate(200);
+    }
+  }
+
+  btn.addEventListener('click', checkPassword);
+  input.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') checkPassword();
+  });
+
+  // Tự động focus vào ô nhập
+  setTimeout(() => input.focus(), 100);
+});
+</script>
+<!-- === KẾT THÚC MÀN HÌNH KHÓA === -->
