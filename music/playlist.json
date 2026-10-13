@@ -7,6 +7,7 @@
   "Cây_Thẳng_Dễ_Gãy.mp3",
   "Kiếm_Nằm_Trong_Bao.mp3",
   "Chén_Cơm_Trên_Bàn_Cân.mp3",
+  "Sàn_đấu_giá_linh_hồn.mp3",
   "Con_ốc_nhỏ.mp3",
   "Luật_Chơi_Nơi_Ao_Tù.mp3"
  ],
@@ -24,6 +25,15 @@
     "Con_ốc_nhỏ.mp3",
     "Đống_Giấy_Vụn.mp3"
    ]
+  "id": "pl_mteajotfhe1",
+   "name": "Xh bc",
+   "tracks": [
+    "Kiếm_Nằm_Trong_Bao.mp3",
+    "Chén_Cơm_Trên_Bàn_Cân.mp3",
+    "Cây_Thẳng_Dễ_Gãy.mp3",
+    "Con_ốc_nhỏ.mp3",
+    "Sàn_đấu_giá_linh_hồn.mp3"
+    ]
   }
  ]
 }
